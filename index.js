@@ -1,3 +1,8 @@
+const BDUSS = '' //**INPUT YOUR BDUSS HERE**
+const STOKEN = '' //**INPUT YOUR STOKEN HERE**
+const SVIPBDUSS = '' //**INPUT YOUR SVIP BDUSS HERE**
+const INDEX_URL = '' // Input your index url here
+
 const error = `
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -13,12 +18,6 @@ const error = `
 <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://cdn.staticfile.org/popper.js/1.12.5/umd/popper.min.js"></script>
 <script src="https://cdn.staticfile.org/twitter-bootstrap/4.1.2/js/bootstrap.min.js"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag() { dataLayer.push(arguments); }
-  gtag('js', new Date());
-  gtag('config', 'UA-112166098-2');
-</script>
 <style>
   body {
     background-image: url("https://pandownload.com/img/baiduwp/bg.png");
@@ -46,7 +45,7 @@ const error = `
 <body>
 <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
 <div class="container">
-<a class="navbar-brand" href="https://pandl.live/">
+<a class="navbar-brand" href="${INDEX_URL}">
 <img src="https://pandownload.com/img/baiduwp/logo.png" class="img-fluid rounded logo-img mr-2" alt="LOGO">PanDownload
 </a>
 <button class="navbar-toggler border-0" type="button" data-toggle="collapse" data-target="#collpase-bar">
@@ -55,16 +54,10 @@ const error = `
 <div class="collapse navbar-collapse" id="collpase-bar">
 <ul class="navbar-nav">
 <li class="nav-item">
-<a class="nav-link" href="https://pandl.live/">主页</a>
+<a class="nav-link" href="${INDEX_URL}">主页</a>
 </li>
 <li class="nav-item">
-<a class="nav-link" href="https://pandownload.com/" target="_blank">网盘下载器</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="https://www.xiaocongjisuan.com/show/api/all/1" target="_blank">小葱计算</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="https://www.pandownload.com/donate.html">捐助</a>
+<a class="nav-link" href="https://github.com/TkzcM/baiduwp" target="_blank">GitHub</a>
 </li>
 </ul>
 </div>
@@ -145,6 +138,19 @@ const filebody = `<!DOCTYPE html>
     }
     return "";
   }
+  function goToDir(surl, pwd, randsk, dir) {
+    var $form = $('<form>').attr('method', 'POST');
+    var appendFormItem = function(key, value) {
+      $form.append($('<input>').attr('type', 'hidden').attr('name', key).attr('value', value));
+    };
+
+    appendFormItem('surl', surl);
+    appendFormItem('pwd', pwd);
+    appendFormItem('randsk', randsk);
+    appendFormItem('dir', dir);
+
+    $form.appendTo($('body')).submit();
+  }
   $(document).ready(function(){
     $(".fa-file").each(function(){
       var icon = getIconClass($(this).next().text());
@@ -163,8 +169,8 @@ const filebody = `<!DOCTYPE html>
 <body>
 <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
 <div class="container">
-<a class="navbar-brand" href="https://pandl.live/">
-<img src="https://pandownload.com/img/baiduwp/logo.png" class="img-fluid rounded logo-img mr-2" alt="LOGO">Pandownload
+<a class="navbar-brand" href="${INDEX_URL}">
+<img src="https://pandownload.com/img/baiduwp/logo.png" class="img-fluid rounded logo-img mr-2" alt="LOGO">PanDownload
 </a>
 <button class="navbar-toggler border-0" type="button" data-toggle="collapse" data-target="#collpase-bar">
 <span class="navbar-toggler-icon"></span>
@@ -172,13 +178,10 @@ const filebody = `<!DOCTYPE html>
 <div class="collapse navbar-collapse" id="collpase-bar">
 <ul class="navbar-nav">
 <li class="nav-item">
-<a class="nav-link" href="https://pandl.live/">主页</a>
+<a class="nav-link" href="${INDEX_URL}">主页</a>
 </li>
 <li class="nav-item">
-<a class="nav-link" href="https://pandownload.com/" target="_blank">网盘下载器</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="https://www.pandownload.com/donate.html">捐助</a>
+<a class="nav-link" href="https://github.com/TkzcM/baiduwp" target="_blank">GitHub</a>
 </li>
 </ul>
 </div>
@@ -193,8 +196,6 @@ const filebody = `<!DOCTYPE html>
 const error_div = `</div>
 </div>
 </div>
-<div style="display:none">
-</div>
 </body>
 </html>`
 
@@ -203,6 +204,8 @@ const generate = async request => {
   const text = await request.formData()
   const surl = text.get('surl')
   const pwd = text.get('pwd')
+  const dir = text.get('dir')
+  let randsk = text.get('randsk')
   const headers = { 'Content-Type': 'text/html;charset=UTF-8' }
   const surl_1 = surl.substring(1)
   async function verifyPwd(surl,pwd){
@@ -237,8 +240,8 @@ const generate = async request => {
       method:'GET',
       headers:{
         'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.514.1919.810 Safari/537.36',
-        'Cookie':'BDUSS=**INPUT YOUR BDUSS HERE**; '
-            +  'STOKEN=**INPUT YOUR STOKEN HERE**; BDCLND=' + randsk
+        'Cookie':'BDUSS=' + BDUSS + '; '
+            +  'STOKEN=' + STOKEN + '; BDCLND=' + randsk
       }
     })
     const body = await res1.text()
@@ -251,21 +254,23 @@ const generate = async request => {
       return 1
     }
   }
-  async function getFileList(shareid,uk,randsk){
+  async function getFileList(shareid,uk,randsk,dir){
     const res2 = await fetch('https://pan.baidu.com/share/list?app_id=250528&channel='
-    + 'chunlei&clienttype=0&desc=0&num=100&order=name&page=1&root=1&shareid=' + shareid + '&showempty=0&uk='
-    + uk + '&web=1',{
+    + 'chunlei&clienttype=0&desc=0&num=100&order=name&page=1&root=' + (+!dir) + '&shareid=' + shareid + '&showempty=0&uk='
+    + uk + (dir ? '&dir=' + encodeURIComponent(dir) : '') + '&web=1',{
       method:'GET',
       headers:{
         'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.514.1919.810 Safari/537.36',
-        'Cookie':'BDUSS=**INPUT YOUR BDUSS HERE**;'
-            +  'STOKEN=**INPUT YOUR STOKEN HERE**; BDCLND=' + randsk
+        'Cookie':'BDUSS=' + BDUSS + ';'
+            +  'STOKEN=' + STOKEN + '; BDCLND=' + randsk
       }
     })
     const body = await res2.text()
     return JSON.parse(body)
   }
-  const randsk = await verifyPwd(surl_1,pwd)
+  if (!randsk) {
+    randsk = await verifyPwd(surl_1,pwd)
+  }
   const json2 = await getSign(surl_1,randsk)
   let filecontent = ``
   if(json2 != 1){
@@ -273,7 +278,15 @@ const generate = async request => {
     const timestamp = json2.timestamp
     const shareid = json2.shareid
     const uk = json2.uk 
-    const filejson = await getFileList(shareid,uk,randsk)
+    const filejson = await getFileList(shareid,uk,randsk,dir)
+    if (dir) {
+      const dirParts = dir.split('/')
+      filecontent += `<li class="list-group-item border-muted rounded text-muted py-2" style="margin-bottom: 10px">
+        <i class="far fa-folder-open mr-2"></i>
+        ${dirParts.map((e, i) => `<a href="javascript:void(0)" onclick="goToDir('${surl}', '${pwd}', '${randsk}', '${dirParts.slice(0, i + 1).join('/')}')">${e}/</a>`).join('')}
+        <span class="float-right"></span>
+      </li>`
+    }
     for(var i=0;i<filejson.list.length;i++){
       const file = filejson.list[i]
       if(file.isdir == 0){
@@ -286,7 +299,7 @@ filecontent += `<li class="list-group-item border-muted rounded text-muted py-2"
       else {
 filecontent += `<li class="list-group-item border-muted rounded text-muted py-2">
 <i class="far fa-folder mr-2"></i>
-<a href="javascript:void(0)" onclick="Swal.fire('Sorry~','暂不支持文件夹下载','error')">`+file.server_filename+`</a>
+<a href="javascript:void(0)" onclick="goToDir('${surl}', '${pwd}', '${randsk}', '${file.path}')">`+file.server_filename+`</a>
 <span class="float-right"></span>
 </li>`
       }
@@ -325,12 +338,6 @@ const landing = `
 <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://cdn.staticfile.org/popper.js/1.12.5/umd/popper.min.js"></script>
 <script src="https://cdn.staticfile.org/twitter-bootstrap/4.1.2/js/bootstrap.min.js"></script>
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag() { dataLayer.push(arguments); }
-gtag('js', new Date());
-gtag('config', 'UA-112166098-2');
-</script>
 <style>
 body {
 background-image: url("https://pandownload.com/img/baiduwp/bg.png");
@@ -401,7 +408,7 @@ return true;
 <body>
 <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
 <div class="container">
-<a class="navbar-brand" href="https://pandl.live/">
+<a class="navbar-brand" href="${INDEX_URL}">
 <img src="https://pandownload.com/img/baiduwp/logo.png" class="img-fluid rounded logo-img mr-2" alt="LOGO">PanDownload
 </a>
 <button class="navbar-toggler border-0" type="button" data-toggle="collapse" data-target="#collpase-bar">
@@ -410,10 +417,10 @@ return true;
 <div class="collapse navbar-collapse" id="collpase-bar">
 <ul class="navbar-nav">
 <li class="nav-item">
-<a class="nav-link" href="https://pandl.live/">主页</a>
+<a class="nav-link" href="${INDEX_URL}">主页</a>
 </li>
 <li class="nav-item">
-<a class="nav-link" href="https://pandownload.com/" target="_blank">网盘下载器</a>
+<a class="nav-link" href="https://github.com/TkzcM/baiduwp" target="_blank">GitHub</a>
 </li>
 </ul>
 </div>
@@ -437,8 +444,6 @@ return true;
 </div>
 </div>
 </div>
-<div style="display:none">
-</div>
 </body>
 </html>
 `
@@ -456,12 +461,6 @@ const helpbody = `<!DOCTYPE html>
 <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://cdn.staticfile.org/popper.js/1.12.5/umd/popper.min.js"></script>
 <script src="https://cdn.staticfile.org/twitter-bootstrap/4.1.2/js/bootstrap.min.js"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag() { dataLayer.push(arguments); }
-  gtag('js', new Date());
-  gtag('config', 'UA-112166098-2');
-</script>
 <style>
   body {
     background-image: url("https://pandownload.com/img/baiduwp/bg.png");
@@ -489,7 +488,7 @@ const helpbody = `<!DOCTYPE html>
 <body>
 <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
 <div class="container">
-<a class="navbar-brand" href="https://pandl.live/">
+<a class="navbar-brand" href="${INDEX_URL}">
 <img src="https://pandownload.com/img/baiduwp/logo.png" class="img-fluid rounded logo-img mr-2" alt="LOGO">PanDownload
 </a>
 <button class="navbar-toggler border-0" type="button" data-toggle="collapse" data-target="#collpase-bar">
@@ -498,16 +497,10 @@ const helpbody = `<!DOCTYPE html>
 <div class="collapse navbar-collapse" id="collpase-bar">
 <ul class="navbar-nav">
 <li class="nav-item">
-<a class="nav-link" href="https://pandl.live/">主页</a>
+<a class="nav-link" href="${INDEX_URL}">主页</a>
 </li>
 <li class="nav-item">
-<a class="nav-link" href="https://pandownload.com/" target="_blank">网盘下载器</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="https://www.xiaocongjisuan.com/show/api/all/1" target="_blank">小葱计算</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="https://www.pandownload.com/donate.html">捐助</a>
+<a class="nav-link" href="https://github.com/TkzcM/baiduwp" target="_blank">GitHub</a>
 </li>
 </ul>
 </div>
@@ -530,12 +523,119 @@ const dbody = `<!DOCTYPE html>
 <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.1.2/css/bootstrap.min.css">
 <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://cdn.staticfile.org/popper.js/1.12.5/umd/popper.min.js"></script>
+<script src="https://cdn.staticfile.org/limonte-sweetalert2/8.11.8/sweetalert2.all.min.js"></script>
 <script src="https://cdn.staticfile.org/twitter-bootstrap/4.1.2/js/bootstrap.min.js"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag() { dataLayer.push(arguments); }
-  gtag('js', new Date());
-  gtag('config', 'UA-112166098-2');
+function utoa(str) {
+  return window.btoa(unescape(encodeURIComponent(str)));
+}
+// base64 encoded ascii to ucs-2 string
+function atou(str) {
+  return decodeURIComponent(escape(window.atob(str)));
+}
+  function getCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
+$(function(){
+  if(getCookie('aria2url') != null){
+    $('#url').attr('value',atou(getCookie('aria2url')))
+    if(getCookie('aria2token')!= null){
+      $('#token').attr('value',atou(getCookie('aria2token')))
+    }
+  }
+})
+async function checkVer(){
+let token = $('#token').val()
+let aria2url = $('#url').val()
+if(token != ""){
+postVer = JSON.stringify({	
+		  jsonrpc: '2.0',
+		  method: 'aria2.getVersion',
+		  id: 'baiduwp',
+		  params: ['token:'+token]
+		})}else{
+postVer = JSON.stringify({	
+		  jsonrpc: '2.0',
+		  method: 'aria2.getVersion',
+		  id: 'baiduwp',
+		  params: []
+		})}
+const getVer = await fetch(aria2url, {
+body: postVer,
+method: 'POST',
+headers:{'content-type':'text/json'}
+}).catch((error) => {
+  Swal.fire('Sorry~','Connect to aria2 failed','error')
+});
+if(await getVer != null)
+	if(await getVer.status === 200)
+	{
+	Swal.fire('detected aria2 version '+JSON.parse(await getVer.text()).result.version,'Please click send','success')
+}
+else{
+	Swal.fire('Sorry~','Connect to aria2 failed','error')}
+	}
+async function addUri(){
+let token = $('#token').val()
+let aria2url = $('#url').val()
+// Thanks to acgotaku/BaiduExporter
+const httpurl = $('#http')[0].href
+const httpsurl = $('#https')[0].href
+const headerOption = ['User-Agent: LogStatistic']
+let post
+let postVer
+if(token != ""){
+postVer = JSON.stringify({	
+		  jsonrpc: '2.0',
+		  method: 'aria2.getVersion',
+		  id: 'baiduwp',
+		  params: ['token:'+token]
+		})
+post = JSON.stringify({jsonrpc:'2.0',id:'baiduwp',method:'aria2.addUri',params:["token:"+token,[httpurl,httpsurl],{header:headerOption}]})
+}
+else{
+postVer = JSON.stringify({	
+		  jsonrpc: '2.0',
+		  method: 'aria2.getVersion',
+		  id: 'baiduwp',
+		  params: []
+		})
+post = JSON.stringify({jsonrpc:'2.0',id:'baiduwp',method:'aria2.addUri',params:[[httpurl,httpsurl],{header:headerOption}]})
+}
+
+
+const getVer = await fetch(aria2url, {
+body: postVer,
+method: 'POST',
+headers:{'content-type':'text/json'}
+}).catch((error) => {
+  Swal.fire('Sorry~','Connect to aria2 failed','error')
+});
+if(await getVer != null)
+	if(await getVer.status === 200)
+	{
+	Swal.fire('detected aria2 version '+JSON.parse(await getVer.text()).result.version,'sending request...','success')
+	const sendLink = await fetch(aria2url, { body: post, method: 'POST',headers:{'content-type':'text/json'}}).catch((e)=>{Swal.fire('Sorry~',e,'error')})
+	if(await sendLink != null)
+		if(await sendLink.status === 200){
+      Swal.fire('Sent successfully','Good Luck','success')
+      document.cookie = 'aria2url='+utoa(aria2url) // add aria2 config to cookie
+      if(token != "" && token != null){
+        document.cookie = 'aria2token='+utoa(token)
+      }
+    }
+		else{
+	Swal.fire('Sorry~','Connect to aria2 failed','error')}
+	}else{
+	Swal.fire('Sorry~','Connect to aria2 failed','error')}
+}
 </script>
 <style>
   body {
@@ -564,7 +664,7 @@ const dbody = `<!DOCTYPE html>
 <body>
 <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
 <div class="container">
-<a class="navbar-brand" href="https://pandl.live/">
+<a class="navbar-brand" href="${INDEX_URL}">
 <img src="https://pandownload.com/img/baiduwp/logo.png" class="img-fluid rounded logo-img mr-2" alt="LOGO">PanDownload
 </a>
 <button class="navbar-toggler border-0" type="button" data-toggle="collapse" data-target="#collpase-bar">
@@ -573,16 +673,10 @@ const dbody = `<!DOCTYPE html>
 <div class="collapse navbar-collapse" id="collpase-bar">
 <ul class="navbar-nav">
 <li class="nav-item">
-<a class="nav-link" href="https://pandl.live/">主页</a>
+<a class="nav-link" href="${INDEX_URL}">主页</a>
 </li>
 <li class="nav-item">
-<a class="nav-link" href="https://pandownload.com/" target="_blank">网盘下载器</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="https://www.xiaocongjisuan.com/show/api/all/1" target="_blank">小葱计算</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="https://www.pandownload.com/donate.html">捐助</a>
+<a class="nav-link" href="https://github.com/TkzcM/baiduwp" target="_blank">GitHub</a>
 </li>
 </ul>
 </div>
@@ -593,6 +687,33 @@ const dbody = `<!DOCTYPE html>
 <div class="col-md-7 col-sm-8 col-11">`
 
 const dfooter = `
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Send to aria2</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+	  <div class="form-group">
+	  <p><label class="control-label">Json-RPC Url</label>
+        <input name="url" id="url" class="form-control" placeholder="http://127.0.0.1:6800/jsonrpc"></p>
+      </div>
+	  <div class="form-group">
+	  	  <p><label class="control-label">Token</label>
+        <input name="token" id="token" class="form-control" placeholder="If none keep empty"></p>
+	  </div>
+	  </div>
+      <div class="modal-footer">
+	  <button type="button" class="btn btn-primary" onclick="addUri()" data-dismiss="modal">Send</button>
+	  <button type="button" class="btn btn-success" onclick="checkVer()">Check Version</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
 </div>
 </div>
@@ -622,8 +743,8 @@ const download = async request => {
       body:formData2,
       headers:{
         'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.514.1919.810 Safari/537.36',
-        'Cookie':'BDUSS=**INPUT YOUR BDUSS HERE**;'
-            +  'STOKEN=**INPUT YOUR STOKEN HERE**; BDCLND=' + randsk
+        'Cookie':'BDUSS=' + BDUSS + ';'
+            +  'STOKEN=' + STOKEN + '; BDCLND=' + randsk
       },
       method:'POST'
       }
@@ -631,30 +752,44 @@ const download = async request => {
     return JSON.parse(await res3.text())
   }
   const json3 = await getDlink(fs_id,timestamp,sign,randsk,share_id,uk)
-  let dresult = ``
+  let dresult
   if(json3.errno == 0){
   const dlink = json3.list[0].dlink
   const getRealLink = await fetch(dlink,{
     headers:{
       'user-agent': 'LogStatistic',
-      'Cookie': 'BDUSS=**INPUT YOUR SVIP BDUSS HERE**;'
+      'Cookie': 'BDUSS=' + SVIPBDUSS + ';'
     },
     redirect:"manual"
   })
-
-  const realLink = await getRealLink.headers.get('Location').substring(7)
-  dresult += `<div class="alert alert-primary" role="alert">
-<h5 class="alert-heading">获取下载链接成功</h5>
-<hr>
-<p class="card-text"><a href="http://`+realLink+`" onclick= target=_blank>下载链接(http)</a> <a href="https://`+realLink+`" target=_blank>下载链接(https)</a><br><br><a>推送到Aria2(即将支持)</a><br><br><a href="./help">下载链接使用方法（必读）</a></p>
-</div>`
+  const dldata = JSON.parse(await getRealLink.text())
+  if(dldata.error_code == 302){
+  const realLink = getRealLink.headers.get('Location').substring(7)
+  dresult = `<div class="alert alert-primary" role="alert">
+    <h5 class="alert-heading">获取下载链接成功</h5>
+    <hr>
+    <p class="card-text"><a id="http" href="http://`+realLink+`" target=_blank>下载链接(http)</a>
+    <a id="https" href="https://`+realLink+`" target=_blank>下载链接(https)</a>
+    <br><br>
+    <a href=javascript:void(0) data-toggle="modal" data-target="#exampleModal">推送到Aria2</a>
+    <br><br>
+    <a href="./help">下载链接使用方法（必读）</a></p>
+    </div>`
   }
   else{
-      dresult += `<div class="alert alert-danger" role="alert">
-<h5 class="alert-heading">获取下载链接失败</h5>
-<hr>
-<p class="card-text">未知错误</p>
-</div>`
+    dresult = `<div class="alert alert-danger" role="alert">
+    <h5 class="alert-heading">获取下载链接失败</h5>
+    <hr>
+    <p class="card-text">未知错误</p>
+    </div>`
+  }
+  }
+  else{
+      dresult = `<div class="alert alert-danger" role="alert">
+    <h5 class="alert-heading">获取下载链接失败</h5>
+    <hr>
+    <p class="card-text">未知错误</p>
+    </div>`
   }
 
   return new Response(dbody+dresult+dfooter, { headers: {'Content-Type': 'text/html;charset=UTF-8'} })
@@ -683,6 +818,13 @@ async function handleRequest(request) {
 <ol>
 <li>选项 -> 下载 -> 手动添加任务时使用的用户代理（UA）-> 填入 <b>LogStatistic</b></li>
 <li>右键复制下载链接，在 IDM 新建任务，粘贴链接即可下载。</li>
+</ol>
+<h4>ADM Pro（Android推荐）</h4>
+<ol>
+<li>设置 –&gt; 下载中 –&gt; 浏览器标识 –&gt; 自定义 浏览器标识</li>
+<li>填入： LogStatistic</li>
+<li>切换到浏览器（ADM留在后台），长按“下载链接”，选择复制链接地址</li>
+<li>然后在ADM这里点击开始即可</li>
 </ol>
 <h4>Chrome浏览器</h4>
 <ol>
